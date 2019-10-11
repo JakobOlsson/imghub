@@ -1,0 +1,48 @@
+---
+version: '3'
+services:
+  bucket:
+    image: minio/minio
+    volumes:
+      - ./s3data:/data:Z
+    ports:
+      - "9000:9000"
+    command:
+      - server
+      - '/s3data'
+    environment:
+      MINIO_ACCESS_KEY: "${AWS_ACCESS_KEY_ID}"
+      MINIO_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY}"
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - bucket
+    environment:
+      MINIO_ACCESS_KEY: "${AWS_ACCESS_KEY_ID}"
+      MINIO_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      S3_BUCKET: "images"
+    entrypoint: >
+      /bin/sh -c "
+      env;
+      echo $$S3_BUCKET;
+      sleep 2;
+      /usr/bin/mc config host add myminio http://bucket:9000 $$MINIO_ACCESS_KEY $$MINIO_SECRET_KEY;
+      /usr/bin/mc rm -r --force myminio/$$S3_BUCKET;
+      /usr/bin/mc mb myminio/$$S3_BUCKET;
+      /usr/bin/mc policy download myminio/$$S3_BUCKET;
+      exit 0;
+      "
+
+  imghub:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: "development"
+      FLASK_APP: "imghub"
+      DEBUG: "true"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      S3_BUCKET: "images"
+      S3_URL: "http://bucket:9000"

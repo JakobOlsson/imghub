@@ -1,0 +1,55 @@
+<!-- <head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js">
+
+    // jQuery methods go here...
+    $.getJSON( "http://localhost:5000/list", function( data ) {
+      var items = [];
+      $.each( data, function( key, val ) {
+        items.push( "<li id='" + key + "'>" + val + "</li>" );
+      });
+ 
+      $( "<ul/>", {
+        "class": "my-new-list",
+        html: items.join( "" )
+      }).appendTo( "body" );
+    });
+  </script>
+</head> 
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>jQuery.getJSON demo</title>
+  <style>
+  img {
+    height: 100px;
+    float: left;
+  }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+</head>
+<body>
+ 
+<div id="images"></div>
+ 
+<script>
+(function() {
+    // jQuery methods go here...
+    $.getJSON( "list", function( data ) {
+      var items = [];
+      $.each( data.files, function( key, val ) {
+        items.push( "<li id='" + key + "'>" + val + "</li>" );
+      });
+ 
+      $( "<ul/>", {
+        "class": "my-new-list",
+        html: items.join( "" )
+      }).appendTo( "body" );
+    });
+})();
+</script>
+<a href='upload'>upload images</a>
+ 
+</body>
+</html>
