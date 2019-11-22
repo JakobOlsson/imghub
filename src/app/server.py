@@ -17,7 +17,10 @@ s3cl = boto3.client('s3',
                     aws_access_key_id=getenv('AWS_ACCESS_KEY_ID', "AKIAIOSFODNN7EXAMPLE"),
                     aws_secret_access_key=getenv('AWS_SECRET_ACCESS_KEY', "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"))
 
+s3_bucket_name = getenv('S3_BUCKET', 'images')
 s3_prefix = getenv("S3_PREFIX", 'images')
+s3_url = getenv('S3_URL', 'http://localhost:9000')
+s3_full_url = getenv('S3_FULL_URL', '{}/{}'.format(s3_url, s3_bucket_name))
 
 
 @app.route('/upload')
@@ -39,7 +42,7 @@ def upload_file():
             return redirect('/upload')
         if rec_file:
             filename = secure_filename(rec_file.filename)
-            bucket = s3.Bucket(getenv("S3_BUCKET", "images"))
+            bucket = s3.Bucket(s3_bucket_name)
             filetype = filename.split('.')[-1]
             if 3 > len(filetype) > 4:
                 filetype = "jpeg"
@@ -53,12 +56,13 @@ def upload_file():
 
 @app.route('/list')
 def list_imgs():
-    bucket = s3.Bucket(getenv("S3_BUCKET", "images"))
+    bucket = s3.Bucket(s3_bucket_name)
     objs = bucket.objects.filter(Prefix='images')
     ret = {"files": []}
     for x in objs:
         filename = x.key
-        ret['files'].append(filename)
+        file_path = "{}/{}".format(s3_full_url, filename)
+        ret['files'].append(file_path)
     return jsonify(ret)
 
 

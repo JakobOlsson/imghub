@@ -39,7 +39,7 @@
     $.getJSON( "list", function( data ) {
       var items = [];
       $.each( data.files, function( key, val ) {
-        items.push( "<li id='" + key + "'>" + val + "</li>" );
+        items.push( "<li id='" + key + "'><a href=\"" + val + "\">" + val + "</li>" );
       });
  
       $( "<ul/>", {
