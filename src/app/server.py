@@ -14,10 +14,11 @@ s3 = boto3.resource('s3',
                     config=boto3.session.Config(signature_version='s3v4'),
                     aws_access_key_id=getenv('AWS_ACCESS_KEY_ID', "AKIAIOSFODNN7EXAMPLE"),
                     aws_secret_access_key=getenv('AWS_SECRET_ACCESS_KEY', "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"))
+'''
 s3cl = boto3.client('s3',
                     aws_access_key_id=getenv('AWS_ACCESS_KEY_ID', "AKIAIOSFODNN7EXAMPLE"),
                     aws_secret_access_key=getenv('AWS_SECRET_ACCESS_KEY', "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"))
-
+'''
 s3_bucket_name = getenv('S3_BUCKET', 'images')
 s3_prefix = getenv("S3_PREFIX", 'images')
 s3_url = getenv('S3_URL', 'http://localhost:9000')
@@ -72,7 +73,6 @@ def delete_img(image):
     app.logger.info(f"delete: {image}")
 
     bucket = s3.Bucket(s3_bucket_name)
-    #s3cl.delete_object(Bucket=s3_bucket_name, Key=image)
     bucket.delete_objects(
         Delete={
             'Objects': [
