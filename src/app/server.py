@@ -1,4 +1,5 @@
 import boto3
+import logging
 from os import getenv
 from flask import Flask, render_template
 from flask import request, redirect, jsonify
@@ -44,7 +45,7 @@ def upload_file():
             filename = secure_filename(rec_file.filename)
             bucket = s3.Bucket(s3_bucket_name)
             filetype = filename.split('.')[-1]
-            if 3 > len(filetype) > 4:
+            if 3 > len(filetype) < 4:
                 filetype = "jpeg"
             ContentType = 'image/{}'.format(filetype)
             Key = "{}/{}".format(s3_prefix, filename)
@@ -62,11 +63,34 @@ def list_imgs():
     for x in objs:
         filename = x.key
         file_path = "{}/{}".format(s3_full_url, filename)
-        ret['files'].append(file_path)
+        file_inf = {'url': file_path, 'name': filename}
+        ret['files'].append(file_inf)
     return jsonify(ret)
+
+@app.route('/delete/<path:image>')
+def delete_img(image):
+    app.logger.info(f"delete: {image}")
+
+    bucket = s3.Bucket(s3_bucket_name)
+    #s3cl.delete_object(Bucket=s3_bucket_name, Key=image)
+    bucket.delete_objects(
+        Delete={
+            'Objects': [
+                {
+                    'Key': image
+                },
+            ]
+        }
+    )
+    return redirect('/listimages')
+
 
 
 if __name__ == '__main__':
     debug = True if getenv('DEBUG', '').lower() == "true" else False
-    print(debug)
+    print(f"Debug is on?: {debug}")
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
     app.run(debug=debug, host='0.0.0.0')

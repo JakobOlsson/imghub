@@ -39,7 +39,9 @@
     $.getJSON( "list", function( data ) {
       var items = [];
       $.each( data.files, function( key, val ) {
-        items.push( "<li id='" + key + "'><a href=\"" + val + "\">" + val + "</li>" );
+        let html = '<li ><a href="' + val.url + '">' + val.url + '</a> - [<a href="../delete/'+val.name+'">X</a>]</li>';
+        //items.push( "<li ><a href=\"" + val.url + "\">" + val.url + "</a> - [x]</li>" );
+        items.push( html );
       });
  
       $( "<ul/>", {
