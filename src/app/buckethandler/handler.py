@@ -8,11 +8,20 @@ bucket_handler = Blueprint('bucket_handler', __name__, template_folder='template
 
 LOG = logging.getLogger(__name__)
 
+AWS_ACCESS_KEY_ID=getenv('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY=getenv('AWS_SECRET_ACCESS_KEY', '')
+# for aws this is https://s3.<region>.amazonaws.com/
+s3_url = getenv('S3_URL', 'http://localhost:9000')
+
 s3 = boto3.resource('s3',
-                    endpoint_url=getenv('S3_URL', 'http://localhost:9000'),
+                    endpoint_url=s3_url,
                     config=boto3.session.Config(signature_version='s3v4'),
-                    aws_access_key_id=getenv('AWS_ACCESS_KEY_ID', "AKIAIOSFODNN7EXAMPLE"),
-                    aws_secret_access_key=getenv('AWS_SECRET_ACCESS_KEY', "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"))
+                    aws_access_key_id=AWS_ACCESS_KEY_ID,
+                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+if AWS_ACCESS_KEY_ID == '':
+    s3 = boto3.resource('s3',
+                        endpoint_url=s3_url,
+                        config=boto3.session.Config(signature_version='s3v4'))
 '''
 s3cl = boto3.client('s3',
                     aws_access_key_id=getenv('AWS_ACCESS_KEY_ID', "AKIAIOSFODNN7EXAMPLE"),
@@ -20,8 +29,7 @@ s3cl = boto3.client('s3',
 '''
 s3_bucket_name = getenv('S3_BUCKET', 'images')
 s3_prefix = getenv("S3_PREFIX", 'images')
-s3_url = getenv('S3_URL', 'http://localhost:9000')
-s3_full_url = getenv('S3_FULL_URL', '{}/{}'.format(s3_url, s3_bucket_name))
+s3_full_url = getenv('S3_FULL_URL', f'{s3_url}/{s3_bucket_name}')
 
 
 @bucket_handler.route('/upload')
@@ -48,7 +56,7 @@ def upload_file():
             if 3 > len(filetype) < 4:
                 filetype = "jpeg"
             ContentType = 'image/{}'.format(filetype)
-            Key = "{}/{}".format(s3_prefix, filename)
+            Key = f"{s3_prefix}/{filename}"
             LOG.info(f"uploading: {filename}")
             bucket.put_object(Body=rec_file,
                               Key=Key,
