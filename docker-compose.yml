@@ -21,7 +21,7 @@ services:
     environment:
       MINIO_ACCESS_KEY: "${AWS_ACCESS_KEY_ID}"
       MINIO_SECRET_KEY: "${AWS_SECRET_ACCESS_KEY}"
-      S3_BUCKET: "images"
+      S3_BUCKET: "imagebucket"
     entrypoint: >
       /bin/sh -c "
       env;
@@ -47,5 +47,6 @@ services:
       DEBUG: "${DEBUG}"
       AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
       AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
-      S3_BUCKET: "images"
+      S3_BUCKET: "imagebucket"
+      S3_PREFIX: "images"
       S3_URL: "http://localhost:9000"
