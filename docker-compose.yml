@@ -35,7 +35,7 @@ services:
       "
 
   imghub:
-    image: docker.pkg.github.com/jakobolsson/imghub/imghub
+    image: ${DOCKER_IMG_URL}
     build: .
     network_mode: 'host'
     depends_on:
