@@ -2,6 +2,7 @@ import logging
 from os import getenv
 from flask import Flask
 from buckethandler.handler import bucket_handler
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 def config_logging(debug=False):
     print(f"Debug is on?: {debug}")
@@ -18,7 +19,14 @@ def create_app(debug=False):
     config_logging(debug)
     return app
 
+def behind_proxy(app):
+    # App is behind one proxy that sets the -For and -Host headers.
+    app = ProxyFix(app, x_for=1, x_host=1)
+
 if __name__ == '__main__':
     debug = True if getenv('DEBUG', '').lower() == "true" else False
     app = create_app(debug)
+    if getenv("PROXIED", "true").lower() == "true":
+        behind_proxy(app)
+
     app.run(debug=debug, host='0.0.0.0')
