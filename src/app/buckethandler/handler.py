@@ -11,16 +11,17 @@ LOG = logging.getLogger(__name__)
 AWS_ACCESS_KEY_ID=getenv('AWS_ACCESS_KEY_ID', '')
 AWS_SECRET_ACCESS_KEY=getenv('AWS_SECRET_ACCESS_KEY', '')
 # for aws this is https://s3.<region>.amazonaws.com/
-s3_url = getenv('S3_URL', 'http://localhost:9000')
+# or https://s3.amazonaws.com/
+s3_api_endpoint = getenv('S3_API_ENDPOINT', 'http://localhost:9000')
 
 s3 = boto3.resource('s3',
-                    endpoint_url=s3_url,
+                    endpoint_url=s3_api_endpoint,
                     config=boto3.session.Config(signature_version='s3v4'),
                     aws_access_key_id=AWS_ACCESS_KEY_ID,
                     aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 if AWS_ACCESS_KEY_ID == '':
     s3 = boto3.resource('s3',
-                        endpoint_url=s3_url,
+                        endpoint_url=s3_api_endpoint,
                         config=boto3.session.Config(signature_version='s3v4'))
 '''
 s3cl = boto3.client('s3',
@@ -29,7 +30,7 @@ s3cl = boto3.client('s3',
 '''
 s3_bucket_name = getenv('S3_BUCKET', 'images')
 s3_prefix = getenv("S3_PREFIX", 'images')
-s3_full_url = getenv('S3_FULL_URL', f'{s3_url}/{s3_bucket_name}')
+s3_full_url = f'{s3_api_endpoint}/{s3_bucket_name}' if getenv('S3_FULL_URL', "") == "" else getenv('S3_FULL_URL')
 
 
 @bucket_handler.route('/upload')

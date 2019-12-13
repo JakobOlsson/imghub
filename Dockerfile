@@ -15,7 +15,8 @@ ENV AWS_ACCESS_KEY_ID=""
 ENV AWS_SECRET_ACCESS_KEY=""
 ENV S3_PREFIX="images"
 ENV S3_BUCKET="imagebucket"
-ENV S3_URL="http://localhost:9000"
+ENV S3_API_ENDPOINT="http://localhost:9000"
+ENV S3_FULL_URL=""
 
 ENTRYPOINT [ "python" ]
 
