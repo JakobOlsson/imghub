@@ -1,0 +1,235 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Creates
+   - A ECS Fargate Cluster
+   - A ECS Service running in fargate
+   - A ECS Task
+   - A S3 bucket with public access and read access to given prefix
+   - A Application Load Balancer
+   - IAM Role
+   - Security Groups
+   - And if domain given, a dns record
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description:
+      The 3 letter short name for the environment
+    Default: dev
+
+  TemplateBucket:
+    Description:
+      The S3 Bucket for Cloud formation templates
+      we will create the stack from.
+      Must be in the same regions as the stacks being
+      created.
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /region/template-bucket
+
+  Project:
+    Type: String
+    Description:
+      The name of the git-repo or project for
+      the templates.
+      This will be the first sub-folder of
+      the template bucket.
+    MinLength: 5
+    AllowedPattern: "[A-Za-z][A-Za-z0-9]*"
+    Default: imagehub
+
+  Version:
+    Type: String
+    Description:
+      The Version of the current template.
+      Can be the git tag og git hash
+    Default: "latest"
+
+  ServiceName:
+    Type: String
+    Description:
+      The name of the service
+    AllowedPattern: "[A-Za-z][A-Za-z0-9]*"
+    Default: 'imghub'
+
+  FullDomainName:
+    Description: the name of your dns zone
+    Type: String
+    Default: ""
+
+  DockerImgUrl:
+    Type: String
+    Description:
+      The url to the docker img
+    Default: ""
+
+  BucketPrefix:
+    Type: String
+    Description:
+      The prefix in the bucket to give public access
+    Default: "images"
+
+Conditions:
+  HaveFullDomainName:
+    Fn::Not:
+      !Equals ["", !Ref 'FullDomainName']
+
+Mappings:
+  EnvironmentMap:
+    dev:
+      Name: development
+    stg:
+      Name: staging
+    prd:
+      Name: production
+    tst:
+      Name: test
+    oth:
+      Name: other
+
+Resources:
+  Cluster:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          'https://s3.amazonaws.com/${TemplateBucket}/${Project}/${Version}/${ServiceName}/nested/ecs-cluster.yml'
+      Parameters:
+        EnvironmentName: !Ref 'EnvironmentName'
+        ClusterName: !Sub "${ServiceName}-cluster"
+        VPCID: !Sub "/env/${EnvironmentName}/vpc/id"
+        PublicSubnetIds: !Sub "/env/${EnvironmentName}/vpc/subnets/public"
+      Tags:
+        - Key: environment
+          Value: !FindInMap [EnvironmentMap, !Ref EnvironmentName, Name]
+        - Key: tool
+          Value: cloudformation
+        - Key: git-repo
+          Value: !Ref 'Project'
+        - Key: git-version
+          Value: !Ref 'Version'
+
+  Roles:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          'https://s3.amazonaws.com/${TemplateBucket}/${Project}/${Version}/${ServiceName}/nested/roles.yml'
+      Parameters:
+        EnvironmentName: !Ref 'EnvironmentName'
+        TaskName: !Sub "${ServiceName}-exampletask"
+      Tags:
+        - Key: environment
+          Value: !FindInMap [EnvironmentMap, !Ref EnvironmentName, Name]
+        - Key: tool
+          Value: cloudformation
+        - Key: git-repo
+          Value: !Ref 'Project'
+        - Key: git-version
+          Value: !Ref 'Version'
+
+  Bucket:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          'https://s3.amazonaws.com/${TemplateBucket}/${Project}/${Version}/${ServiceName}/nested/s3.yml'
+      Parameters:
+        BucketName:
+          Fn::If:
+            - HaveFullDomainName
+            - Fn::Join:
+                - '-'
+                - - Fn::Join:
+                      - '-'
+                      - !Split ['.', !Ref 'FullDomainName']
+                  - !Sub "${EnvironmentName}-imghubbucket-${AWS::Region}"
+            - Fn::Sub:
+                "${AWS::AcountId}-${EnvironmentName}-imghubbucket-${AWS::Region}"
+
+        BucketPrefix: !Ref 'BucketPrefix'
+      Tags:
+        - Key: environment
+          Value: !FindInMap [EnvironmentMap, !Ref EnvironmentName, Name]
+        - Key: tool
+          Value: cloudformation
+        - Key: git-repo
+          Value: !Ref 'Project'
+        - Key: git-version
+          Value: !Ref 'Version'
+
+  TaskDefinition:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          'https://s3.amazonaws.com/${TemplateBucket}/${Project}/${Version}/${ServiceName}/nested/ecs-task.yml'
+      Parameters:
+        EnvironmentName: !Ref 'EnvironmentName'
+        TaskName: !Sub "${ServiceName}-exampletask"
+        TaskRole: !GetAtt Roles.Outputs.TaskRole
+        LogGroup: !GetAtt Cluster.Outputs.LogGroup
+        DockerImgUrl: !Ref DockerImgUrl
+        DockerTag: !Ref Version
+        ImageS3Bucket: !GetAtt Bucket.Outputs.BucketName
+        FQDN: !GetAtt DNSRecord.Outputs.DnsName
+      Tags:
+        - Key: environment
+          Value: !FindInMap [EnvironmentMap, !Ref EnvironmentName, Name]
+        - Key: tool
+          Value: cloudformation
+        - Key: git-repo
+          Value: !Ref 'Project'
+        - Key: git-version
+          Value: !Ref 'Version'
+
+  Service:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          'https://s3.amazonaws.com/${TemplateBucket}/${Project}/${Version}/${ServiceName}/nested/ecs-service.yml'
+      Parameters:
+        EnvironmentName: !Ref 'EnvironmentName'
+        ServiceName: !Ref 'ServiceName'
+        VPCID: !Sub "/env/${EnvironmentName}/vpc/id"
+        PrivteSubnetIds: !Sub "/env/${EnvironmentName}/vpc/subnets/private"
+        ClusterName: !GetAtt Cluster.Outputs.ClusterName
+        TaskDefinition: !GetAtt TaskDefinition.Outputs.TaskDefinition
+        ContainerPort: !GetAtt TaskDefinition.Outputs.ContainerPort
+        ContainerName: !GetAtt TaskDefinition.Outputs.ContainerName
+        SecurityGroup: !GetAtt Cluster.Outputs.SecurityGroup
+        Role: !GetAtt Roles.Outputs.TaskRole
+        HttpListener: !GetAtt Cluster.Outputs.PublicHttpListener
+      Tags:
+        - Key: environment
+          Value: !FindInMap [EnvironmentMap, !Ref EnvironmentName, Name]
+        - Key: tool
+          Value: cloudformation
+        - Key: git-repo
+          Value: !Ref 'Project'
+        - Key: git-version
+          Value: !Ref 'Version'
+
+  DNSRecord:
+    Type: AWS::CloudFormation::Stack
+    Condition: HaveFullDomainName
+    Properties:
+      TemplateURL:
+        Fn::Sub:
+          'https://s3.amazonaws.com/${TemplateBucket}/${Project}/${Version}/${ServiceName}/nested/dnsrecord.yml'
+      Parameters:
+        EnvironmentName: !Ref 'EnvironmentName'
+        ZoneNameId: !GetAtt Cluster.Outputs.LoadBalancerCanonicalId
+        LbDnsName: !GetAtt Cluster.Outputs.ExternalDnsName
+        ServiceName: !Ref 'ServiceName'
+        FullDomainName: !Ref 'FullDomainName'
+      Tags:
+        - Key: environment
+          Value: !FindInMap [EnvironmentMap, !Ref EnvironmentName, Name]
+        - Key: tool
+          Value: cloudformation
+        - Key: git-repo
+          Value: !Ref 'Project'
+        - Key: git-version
+          Value: !Ref 'Version'

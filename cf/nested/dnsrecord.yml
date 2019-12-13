@@ -1,0 +1,64 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  This creates a dns record entry
+
+Parameters:
+  EnvironmentName:
+    Description: which environment to spin-up
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - tst
+      - stg
+      - prd
+      - oth
+
+  ServiceName:
+    Type: String
+
+  ZoneNameId:
+    Description: The lb zone id
+    Type: String
+    Default: ""
+
+  LbDnsName:
+    Description: THe lb dns name
+    Type: String
+    Default: ""
+
+  FullDomainName:
+    Description: the name of your dns zone
+    Type: String
+    Default: ""
+
+Mappings:
+  EnvironmentMap:
+    dev:
+      Name: development
+    stg:
+      Name: staging
+    prd:
+      Name: production
+    tst:
+      Name: test
+
+
+Resources:
+  DnsRecord:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      Comment: "Dns record for service"
+      HostedZoneName: !Sub "${EnvironmentName}.${FullDomainName}."
+      RecordSets:
+        - Name:
+            !Sub "${ServiceName}-${AWS::Region}.${EnvironmentName}.${FullDomainName}."
+          Type: A
+          AliasTarget:
+            HostedZoneId: !Ref ZoneNameId
+            DNSName: !Ref LbDnsName
+Outputs:
+  DnsName:
+    Value:
+      !Sub "${ServiceName}-${AWS::Region}.${EnvironmentName}.${FullDomainName}"

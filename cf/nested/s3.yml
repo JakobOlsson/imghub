@@ -1,0 +1,49 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Creates a single S3 bucket
+
+Parameters:
+  BucketName:
+    Description: Name for the bucket
+    Type: String
+
+  BucketPrefix:
+    Type: String
+    Description:
+      The prefix in the bucket to give public access
+    Default: "images"
+
+
+Resources:
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        !Ref S3Bucket
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource:
+              Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  - !Ref S3Bucket
+                  - !Sub "/${BucketPrefix}/*"
+            Principal: "*"
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      AccessControl: PublicRead
+
+Outputs:
+  BucketName:
+    Description: The name of the bucket created
+    Value: !Ref BucketName

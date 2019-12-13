@@ -1,0 +1,159 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Creates
+   - A ECS Task Definition
+
+Parameters:
+  EnvironmentName:
+    Description: which environment to spin-up
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - tst
+      - stg
+      - prd
+      - oth
+
+  TaskName:
+    Description:
+      Name of the task definition
+    Type: String
+    Default: "sample-task-definition"
+
+  TaskRole:
+    Description:
+      IAM Role ARN
+    Type: String
+    Default: ""
+
+  LogGroup:
+    Description:
+      The CloudWatch Log group to put log streams in to
+    Type: String
+    Default: /default
+
+  DockerImgUrl:
+    Description:
+      The url to the docker image to run
+    Type: String
+    Default: nginxdemos/hello
+
+  DockerTag:
+    Description:
+      Which tag of given docker image to run
+    Type: String
+    Default: latest
+
+  ContainerPort:
+    Description:
+      The port the container recives traffic on
+    Type: Number
+    Default: 5000
+
+  ContainerName:
+    Description:
+      The Name of the container definition
+      inside the task defintion
+    Type: String
+    Default: main
+
+  ImageS3Bucket:
+    Description:
+      the s3 bucket name
+    Type: String
+
+  FQDN:
+    Type: String
+
+
+Mappings:
+  EnvironmentMap:
+    dev:
+      Name: development
+    stg:
+      Name: staging
+    prd:
+      Name: production
+    tst:
+      Name: test
+    oth:
+      Name: other
+
+
+Conditions:
+  # Check if we have a defined IAM Role
+  NoRoleDefined: !Equals [!Ref TaskRole, ""]
+
+
+Resources:
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${EnvironmentName}-${TaskName}
+      RequiresCompatibilities:
+        - "FARGATE"
+        - "EC2"
+      Cpu: "1024"
+      Memory: "2048"
+      NetworkMode: awsvpc
+      ExecutionRoleArn:
+        Fn::If:
+          - 'NoRoleDefined'
+          - !Ref AWS::NoValue
+          - !Ref TaskRole
+      TaskRoleArn:
+        Fn::If:
+          - 'NoRoleDefined'
+          - !Ref AWS::NoValue
+          - !Ref TaskRole
+      ContainerDefinitions:
+        -
+          Name: !Ref ContainerName
+          Image: !Sub ${DockerImgUrl}:${DockerTag}
+          Cpu: "1024"
+          Memory: "2048"
+          Essential: "true"
+          PortMappings:
+            - ContainerPort: !Ref 'ContainerPort'
+              Protocol: "tcp"
+          Environment:
+            - Name: S3_BUCKET
+              Value: !Ref "ImageS3Bucket"
+            - Name: S3_PREFIX
+              Value: "images"
+            - Name: S3_URL
+              Value: !Sub "https://s3.amazonaws.com"
+            - Name: S3_FULL_URL
+              Value: !Sub "https://${ImageS3Bucket}.s3.amazonaws.com"
+            - Name: PROXIED
+              Value: "true"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref 'LogGroup'
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: !Ref 'TaskName'
+
+      Tags:
+        -
+          Key: Environment
+          Value: !FindInMap [EnvironmentMap, !Ref EnvironmentName, Name]
+        -
+          Key: Name
+          Value: !Sub ${EnvironmentName}-${TaskName}
+
+Outputs:
+  TaskDefinition:
+    Description:
+      The ecs task defintion
+    Value: !Ref TaskDefinition
+  ContainerName:
+    Description:
+      The name of the main container in the task
+    Value: !Ref ContainerName
+  ContainerPort:
+    Description:
+      The port of the main container in the task
+    Value: !Ref ContainerPort

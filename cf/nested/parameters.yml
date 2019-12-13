@@ -1,0 +1,55 @@
+---
+Description:
+  Pushes values to parameter store
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+
+  Project:
+    Type: String
+    Default: templates
+
+  ServiceName:
+    Type: String
+
+  SecurityGroup:
+    Type: String
+
+  HttpListener:
+    Type: String
+
+  PublicEndpoint:
+    Type: String
+
+Resources:
+  HttpListenerParm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/env/${EnvironmentName}/services/${ServiceName}/httplistener"
+      Type: String
+      Value: !Ref HttpListener
+      Description:
+        Fn::Sub: >
+          "The ${ServiceName}'s default http listener arn (to register more listener rules if needed)"
+
+  SecurityGroupParm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/env/${EnvironmentName}/services/${ServiceName}/securitygroup"
+      Type: String
+      Value: !Ref SecurityGroup
+      Description:
+        Fn::Sub: >
+          "The ${ServiceName}'s default security group"
+
+  PublicEndpointParm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/env/${EnvironmentName}/services/${ServiceName}/endpoint"
+      Type: String
+      Value: !Ref PublicEndpoint
+      Description:
+        Fn::Sub: >
+          "The ${ServiceName}'s endpoint"
