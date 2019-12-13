@@ -35,7 +35,7 @@ services:
       "
 
   imghub:
-    image: ${DOCKER_IMG_URL}
+    image: "${DOCKER_IMG_URL}:latest"
     build: .
     network_mode: 'host'
     depends_on:
