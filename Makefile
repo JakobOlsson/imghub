@@ -7,14 +7,13 @@ DOCKER_IMG_URL ?= docker.pkg.github.com/jakobolsson/imghub/imghub
 .PHONY: run run-nobuild build clean
 
 run:
-	AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) docker-compose up --build
+	AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) DOCKER_IMG_URL=$(DOCKER_IMG_URL) docker-compose up --build
 
 run-nobuild:
-	docker-compose pull
-	AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) docker-compose up --no-build
+	AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) DOCKER_IMG_URL=$(DOCKER_IMG_URL) docker-compose up --no-build
 
 build:
-	docker-compose build
+	AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) DOCKER_IMG_URL=$(DOCKER_IMG_URL) docker-compose build
 
 push: build
 	docker tag $(DOCKER_IMG_URL):latest $(DOCKER_IMG_URL):$(GIT_HASH)
