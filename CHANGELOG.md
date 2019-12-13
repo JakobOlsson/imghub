@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - changed environment variables to be more verbal what they do
 - update documentation
+- cloudformation example with aws ecs fargate
 
 ## [0.1.2] - 2019-12-13
 ### Added
