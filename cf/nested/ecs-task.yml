@@ -123,7 +123,7 @@ Resources:
               Value: !Ref "ImageS3Bucket"
             - Name: S3_PREFIX
               Value: "images"
-            - Name: S3_URL
+            - Name: S3_API_ENDPOINT
               Value: !Sub "https://s3.amazonaws.com"
             - Name: S3_FULL_URL
               Value: !Sub "https://${ImageS3Bucket}.s3.amazonaws.com"
