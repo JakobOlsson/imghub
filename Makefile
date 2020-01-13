@@ -1,5 +1,6 @@
 AWS_ACCESS_KEY_ID ?= AAAAACCESSKEY
 AWS_SECRET_ACCESS_KEY ?= SOMEVerySecretKey1234
+SESSION_SECRET_KEY ?= ASecretSessionKey22jpapeoipnnsdj
 DEBUG ?= false
 GIT_HASH ?= $(shell git describe --long)
 DOCKER_IMG_URL ?= docker.pkg.github.com/jakobolsson/imghub/imghub

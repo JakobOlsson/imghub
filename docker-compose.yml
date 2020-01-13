@@ -40,6 +40,7 @@ services:
     network_mode: 'host'
     depends_on:
       - bucket
+      - redisdb
     ports:
       - "5000:5000"
     environment:
@@ -51,3 +52,11 @@ services:
       S3_BUCKET: "imagebucket"
       S3_PREFIX: "images"
       S3_API_ENDPOINT: "http://localhost:9000"
+      SESSION_KEY: "${SESSION_SECRET_KEY}"
+      SESSION_TYPE: "redis"
+      SESSION_REDIS: "redis://localhost:6379"
+
+  redisdb:
+      image: redis
+      ports:
+        - '6379:6379'
