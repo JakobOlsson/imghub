@@ -19,4 +19,8 @@ optional:
 - `S3_FULL_URL` (full url to your bucket excluding prefix, if other then end-point/bucket)
 - `S3_PREFIX` (bucket prefix/folder where images will reside)
 
+- `SESSION_KEY` - a long secret key to signe session cookies with
+- `SESSION_TYPE` - the type of session: redis
+- `SESSION_REDIS` - the url to redis in form of `redis://url:port`
+
 if you run `make run` it sets them to some default values for local development. access on [http://localhost:5000/listimages]
