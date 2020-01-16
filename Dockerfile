@@ -17,6 +17,8 @@ ENV S3_PREFIX="images"
 ENV S3_BUCKET="imagebucket"
 ENV S3_API_ENDPOINT="http://localhost:9000"
 ENV S3_FULL_URL=""
+ENV SESSION_TYPE="redis"
+ENV SESSION_KEY=""
 
 ENTRYPOINT [ "python" ]
 

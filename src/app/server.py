@@ -1,7 +1,9 @@
 import logging
 from os import getenv
 from flask import Flask
-from buckethandler.handler import bucket_handler
+from flask_session import Session
+from bucket.handler import bucket_handler
+from session.handler import session_handler
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
@@ -16,6 +18,11 @@ def config_logging(debug=False):
 def create_app(debug=False):
     app = Flask(__name__)
     app.register_blueprint(bucket_handler)
+    app.config.from_pyfile('settings.py')
+    # configure session
+    sess = Session()
+    sess.init_app(app)
+    app.register_blueprint(session_handler)
     # limit max payload to 50MB
     app.config['MAX_CONTENT_LENGTH']
     config_logging(debug)

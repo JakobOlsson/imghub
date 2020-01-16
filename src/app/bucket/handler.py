@@ -68,7 +68,7 @@ def upload_file():
 @bucket_handler.route('/list')
 def list_imgs():
     bucket = s3.Bucket(s3_bucket_name)
-    objs = bucket.objects.filter(Prefix='images')
+    objs = bucket.objects.filter(Prefix=s3_prefix)
     ret = {"files": []}
     for x in objs:
         filename = x.key
@@ -76,6 +76,7 @@ def list_imgs():
         file_inf = {'url': file_path, 'name': filename}
         ret['files'].append(file_inf)
     return jsonify(ret)
+
 
 @bucket_handler.route('/delete/<path:image>')
 def delete_img(image):
@@ -94,3 +95,11 @@ def delete_img(image):
     return redirect('/listimages')
 
 
+@bucket_handler.route('/test/bucket/access')
+def test_bucket():
+    bucket = s3.Bucket(s3_bucket_name)
+    try:
+        bucket.objects.filter(Prefix=s3_prefix)
+        return "ok"
+    except:
+        return "error"
