@@ -17,8 +17,10 @@ def config_logging(debug=False):
 
 def create_app(debug=False):
     app = Flask(__name__)
-    app.register_blueprint(bucket_handler)
+    # Get settings
     app.config.from_pyfile('settings.py')
+    # Register bucket handler
+    app.register_blueprint(bucket_handler)
     # configure session
     sess = Session()
     sess.init_app(app)
